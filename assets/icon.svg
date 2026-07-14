@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7aa2f7"/>
+      <stop offset="100%" stop-color="#3d59a1"/>
+    </linearGradient>
+    <linearGradient id="note-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#c0caf5"/>
+    </linearGradient>
+    <linearGradient id="arrow-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9ece6a"/>
+      <stop offset="100%" stop-color="#73a942"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded gradient background -->
+  <rect x="0" y="0" width="512" height="512" rx="112" ry="112" fill="url(#bg-gradient)"/>
+
+  <!-- Subtle inner highlight for depth -->
+  <rect x="16" y="16" width="480" height="480" rx="100" ry="100"
+        fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="4"/>
+
+  <!-- Music note: stem + flag -->
+  <g transform="translate(150,120)">
+    <rect x="118" y="0" width="16" height="182" rx="8" fill="url(#note-gradient)"/>
+    <path d="M134 0 C 172 8, 200 28, 200 62 C 200 78, 186 84, 172 78 C 168 60, 152 46, 134 40 Z"
+          fill="url(#note-gradient)"/>
+    <ellipse cx="92" cy="196" rx="42" ry="32" fill="url(#note-gradient)"/>
+  </g>
+
+  <!-- Download arrow motif, bottom-right accent -->
+  <g transform="translate(288,272)">
+    <rect x="42" y="0" width="20" height="90" rx="10" fill="url(#arrow-gradient)"/>
+    <path d="M2 70 L52 130 L102 70 L78 70 L52 100 L26 70 Z" fill="url(#arrow-gradient)"/>
+    <rect x="4" y="146" width="96" height="16" rx="8" fill="url(#arrow-gradient)"/>
+  </g>
+</svg>
