@@ -167,7 +167,11 @@ def test_download_sets_ignoreerrors_true(tmp_path: Path) -> None:
 
 
 def test_download_sets_ffmpeg_location_from_binaries(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(downloader.binaries, "ffmpeg_path", lambda: Path("/fake/ffmpeg"))
+    # Compare against str(fake_ffmpeg) rather than a hardcoded POSIX literal:
+    # Path("/fake/ffmpeg") stringifies as '\\fake\\ffmpeg' on Windows, which
+    # broke this assertion on the Windows CI runner.
+    fake_ffmpeg = Path("/fake/ffmpeg")
+    monkeypatch.setattr(downloader.binaries, "ffmpeg_path", lambda: fake_ffmpeg)
     captured: list[ScriptedYoutubeDL] = []
 
     download(
@@ -177,7 +181,7 @@ def test_download_sets_ffmpeg_location_from_binaries(monkeypatch, tmp_path: Path
         ydl_factory=make_factory(captured=captured),
     )
 
-    assert captured[0].opts["ffmpeg_location"] == "/fake/ffmpeg"
+    assert captured[0].opts["ffmpeg_location"] == str(fake_ffmpeg)
 
 
 def test_download_ensures_deno_on_path_before_instantiation(monkeypatch, tmp_path: Path) -> None:
