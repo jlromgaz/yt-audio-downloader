@@ -32,9 +32,19 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y python3-tk
 
-      - name: Install ffmpeg (Linux only — macOS/Windows runners ship it preinstalled)
+      # Confirmed via a real CI run: none of the three hosted runner images
+      # ship ffmpeg preinstalled — install it explicitly on all of them.
+      - name: Install ffmpeg (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
+      - name: Install ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt

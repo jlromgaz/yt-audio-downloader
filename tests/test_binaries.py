@@ -99,13 +99,16 @@ def test_ensure_deno_on_path_prepends_only_resolved_deno_dir(
     resolved_dir = tmp_path / "deno-bin"
     resolved_dir.mkdir()
     monkeypatch.setattr(binaries, "deno_dir", lambda: resolved_dir)
-    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    # os.pathsep is ':' on POSIX and ';' on Windows — hardcoding ':' made
+    # this test fail on the Windows CI runner (found via a real CI run).
+    existing_entries = [str(tmp_path / "usr-bin"), str(tmp_path / "bin")]
+    monkeypatch.setenv("PATH", binaries.os.pathsep.join(existing_entries))
 
     binaries.ensure_deno_on_path()
 
     entries = binaries.os.environ["PATH"].split(binaries.os.pathsep)
     assert entries[0] == str(resolved_dir)
-    assert entries[1:] == ["/usr/bin", "/bin"]
+    assert entries[1:] == existing_entries
 
 
 def test_ensure_deno_on_path_does_not_duplicate_entry_when_called_twice(
@@ -114,7 +117,7 @@ def test_ensure_deno_on_path_does_not_duplicate_entry_when_called_twice(
     resolved_dir = tmp_path / "deno-bin"
     resolved_dir.mkdir()
     monkeypatch.setattr(binaries, "deno_dir", lambda: resolved_dir)
-    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    monkeypatch.setenv("PATH", binaries.os.pathsep.join([str(tmp_path / "usr-bin"), str(tmp_path / "bin")]))
 
     binaries.ensure_deno_on_path()
     binaries.ensure_deno_on_path()
