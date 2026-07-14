@@ -30,6 +30,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import platform
 import shutil
 import stat
@@ -65,8 +66,22 @@ def _platform_dir_name() -> str:
     return "linux"
 
 
-def _http_get_json(url: str) -> dict:
-    request = urllib.request.Request(url, headers=GITHUB_API_HEADERS)
+def _github_api_headers() -> dict:
+    """GitHub's REST API rate-limits unauthenticated requests to 60/hour per
+    IP — trivial to exhaust from a shared CI runner IP pool across repeated
+    workflow runs (confirmed via a real "403: rate limit exceeded" release
+    failure). Authenticated requests get 5000/hour. GITHUB_TOKEN is
+    injected automatically by GitHub Actions; unset in local dev, where the
+    lower anonymous limit is fine for a single manual run."""
+    headers = dict(GITHUB_API_HEADERS)
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+def _http_get_json(url: str, headers: dict | None = None) -> dict:
+    request = urllib.request.Request(url, headers=headers or GITHUB_API_HEADERS)
     with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -150,7 +165,7 @@ def fetch_ffmpeg_macos(vendor_dir: Path) -> None:
 
 
 def _btbn_asset_url(name_predicate: Callable[[str], bool]) -> str:
-    release = _http_get_json(BTBN_RELEASES_URL)
+    release = _http_get_json(BTBN_RELEASES_URL, headers=_github_api_headers())
     for asset in release.get("assets", []):
         if name_predicate(asset["name"]):
             return asset["browser_download_url"]
@@ -219,7 +234,7 @@ def fetch_deno(vendor_dir: Path) -> None:
     naming scheme, verified against the live API response while writing
     this script, but not executed on those OSes in this session."""
     print("Fetching deno (GitHub releases)...")
-    release = _http_get_json(DENO_RELEASES_URL)
+    release = _http_get_json(DENO_RELEASES_URL, headers=_github_api_headers())
     target_triple = _deno_asset_suffix()
     asset_name = f"deno-{target_triple}.zip"
 

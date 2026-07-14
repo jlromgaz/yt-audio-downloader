@@ -108,6 +108,11 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Fetch vendored ffmpeg + deno
+        # GITHUB_TOKEN raises fetch_vendor.py's GitHub API rate limit from
+        # 60/hour (anonymous) to 5000/hour — confirmed necessary via a real
+        # "403: rate limit exceeded" release failure after repeated runs.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/fetch_vendor.py
 
       - name: Build with PyInstaller
