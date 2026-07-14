@@ -131,8 +131,26 @@ jobs:
         run: xvfb-run -a python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-linux
 
       - name: E2E smoke gate — frozen binary launch check (macOS)
+        # macOS builds a proper .app bundle now (see app.spec); the actual
+        # Mach-O binary lives inside Contents/MacOS.
         if: runner.os == 'macOS'
-        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-macos
+        run: python scripts/verify_e2e.py --binary "dist/YouTubeAudioDownloader-macos.app/Contents/MacOS/YouTubeAudioDownloader-macos"
+
+      - name: Package macOS .app as a zip for distribution
+        # A .app is a directory, not a single file — GitHub Release assets
+        # need one file, so zip it here. Also fixes the real bug a user hit:
+        # double-clicking the old bare Mach-O binary (no .app wrapper) in
+        # Finder opened a text editor instead of launching the app.
+        #
+        # app.spec still emits a bare onefile binary alongside the .app
+        # (PyInstaller builds EXE() before wrapping it in BUNDLE()) — that
+        # stray binary is the exact broken artifact the user already hit,
+        # so it must NOT be uploaded; only the zip should remain in dist/.
+        if: runner.os == 'macOS'
+        run: |
+          cd dist
+          zip -r YouTubeAudioDownloader-macos.app.zip YouTubeAudioDownloader-macos.app
+          rm -rf YouTubeAudioDownloader-macos.app YouTubeAudioDownloader-macos
 
       - name: E2E smoke gate — frozen binary launch check (Windows)
         if: runner.os == 'Windows'

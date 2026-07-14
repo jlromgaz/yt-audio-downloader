@@ -9,16 +9,20 @@ a tkinter-free core library.
 
 No Python install needed — just download the app for your OS:
 
-1. Go to the [Releases](../../releases) page and download the binary for
+1. Go to the [Releases](../../releases) page and download the asset for
    your platform: `YouTubeAudioDownloader-windows.exe`,
-   `YouTubeAudioDownloader-macos`, or `YouTubeAudioDownloader-linux`.
-2. Double-click it to launch. No install step required.
-   - **macOS**: the binary isn't signed with an Apple Developer certificate,
-     so Gatekeeper will block it the first time ("Apple could not verify..."
-     / cannot check for malicious software). Either right-click the file →
+   `YouTubeAudioDownloader-macos.app.zip`, or `YouTubeAudioDownloader-linux`.
+2. **macOS**: unzip `YouTubeAudioDownloader-macos.app.zip` first — you get a
+   `YouTubeAudioDownloader-macos.app` you can double-click. **Windows/Linux**:
+   the downloaded file is already runnable, no unzip needed.
+3. Double-click it to launch. No install step required.
+   - **macOS**: the app isn't signed with an Apple Developer certificate, so
+     Gatekeeper will block it the first time ("Apple could not verify..." /
+     cannot check for malicious software). Either right-click the `.app` →
      **Open** → **Open** in the dialog, or run
-     `xattr -d com.apple.quarantine YouTubeAudioDownloader-macos` in
-     Terminal, then open it normally.
+     `xattr -dr com.apple.quarantine YouTubeAudioDownloader-macos.app` in
+     Terminal (note the `-r`, needed since a `.app` is a folder), then open
+     it normally.
 3. Paste a YouTube link (video, playlist, or radio/mix), pick a destination
    folder (defaults to `Downloads/YoutubeAudioDownloader`), and click
    **Download**.
@@ -78,14 +82,22 @@ python scripts/verify_e2e.py
 ```bash
 python scripts/fetch_vendor.py   # downloads ffmpeg + deno into vendor/<platform>/
 python scripts/make_icons.py     # generates assets/icon.{ico,icns,png}
-pyinstaller app.spec             # onefile build -> dist/YouTubeAudioDownloader-<os>[.exe]
+pyinstaller app.spec             # onefile build
 ```
 
-Then smoke-test the frozen binary launches cleanly (filename depends on your
-OS: `-macos`, `-linux`, or `-windows.exe`):
+Output layout differs by OS: Windows -> `dist/YouTubeAudioDownloader-windows.exe`;
+Linux -> `dist/YouTubeAudioDownloader-linux`; macOS -> a proper app bundle at
+`dist/YouTubeAudioDownloader-macos.app` (the actual binary lives inside, at
+`Contents/MacOS/YouTubeAudioDownloader-macos`) — a bare Mach-O binary without
+this wrapper isn't reliably launchable by double-clicking in Finder.
+
+Then smoke-test the frozen binary launches cleanly:
 
 ```bash
-python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-macos
+# macOS
+python scripts/verify_e2e.py --binary "dist/YouTubeAudioDownloader-macos.app/Contents/MacOS/YouTubeAudioDownloader-macos"
+# Linux / Windows
+python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-linux
 ```
 
 ### Architecture

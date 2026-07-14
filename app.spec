@@ -97,3 +97,17 @@ exe = EXE(
     entitlements_file=None,
     icon=_icon_path,
 )
+
+if sys.platform == "darwin":
+    # A bare onefile Mach-O binary (no .app wrapper) is not reliably
+    # double-clickable from Finder — confirmed via a real user report: it
+    # opened in a generic text editor instead of launching. macOS GUI apps
+    # need a proper .app bundle (Contents/MacOS + Info.plist) for Finder
+    # and Gatekeeper to recognize and launch them correctly.
+    app = BUNDLE(
+        exe,
+        name=f"{_exe_name}.app",
+        icon=_icon_path,
+        bundle_identifier="com.jlromgaz.ytaudiodownloader",
+        info_plist={"NSHighResolutionCapable": True},
+    )
