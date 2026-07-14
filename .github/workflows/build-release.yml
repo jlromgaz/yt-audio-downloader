@@ -128,17 +128,23 @@ jobs:
 
       - name: E2E smoke gate — frozen binary launch check (Linux)
         if: runner.os == 'Linux'
-        run: xvfb-run -a python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader
+        run: xvfb-run -a python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-linux
 
       - name: E2E smoke gate — frozen binary launch check (macOS)
         if: runner.os == 'macOS'
-        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader
+        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-macos
 
       - name: E2E smoke gate — frozen binary launch check (Windows)
         if: runner.os == 'Windows'
-        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader.exe
+        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-windows.exe
 
       - name: Upload build artifact
+        # Each OS's onefile binary now has a distinct name (see app.spec),
+        # so it's safe for all 3 to land as assets on the same GitHub
+        # Release without colliding — confirmed necessary on the first real
+        # v0.1.0 release, which silently shipped only 2 of 3 binaries
+        # because macOS and Linux originally produced the identical
+        # filename "YouTubeAudioDownloader".
         uses: actions/upload-artifact@v4
         with:
           name: YouTubeAudioDownloader-${{ matrix.os }}

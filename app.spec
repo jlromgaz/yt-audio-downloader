@@ -33,12 +33,20 @@ VENDOR_DIR = REPO_ROOT / "vendor" / PLATFORM_DIR
 if sys.platform.startswith("win"):
     _ffmpeg_name, _deno_name = "ffmpeg.exe", "deno.exe"
     _icon_path = str(REPO_ROOT / "assets" / "icon.ico")
+    # PyInstaller appends .exe on Windows automatically.
+    _exe_name = "YouTubeAudioDownloader-windows"
 elif sys.platform == "darwin":
     _ffmpeg_name, _deno_name = "ffmpeg", "deno"
     _icon_path = str(REPO_ROOT / "assets" / "icon.icns")
+    _exe_name = "YouTubeAudioDownloader-macos"
 else:
     _ffmpeg_name, _deno_name = "ffmpeg", "deno"
     _icon_path = str(REPO_ROOT / "assets" / "icon_256.png")
+    # Distinct filenames per OS: macOS and Linux onefile binaries otherwise
+    # share the identical name "YouTubeAudioDownloader", which collided as
+    # GitHub Release assets (one silently overwrote the other) — confirmed
+    # on the first real v0.1.0 release, which shipped only 2 of 3 binaries.
+    _exe_name = "YouTubeAudioDownloader-linux"
 
 # --add-binary entries: (source path on the build host, destination dir
 # inside the onefile bundle, resolved at runtime via sys._MEIPASS by
@@ -74,7 +82,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name="YouTubeAudioDownloader",
+    name=_exe_name,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
