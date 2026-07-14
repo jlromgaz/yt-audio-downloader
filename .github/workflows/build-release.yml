@@ -1,0 +1,116 @@
+name: Build & Release
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["**"]
+
+# Default to read-only; the release job explicitly elevates to
+# contents: write, which is the only step that needs to publish anything.
+permissions:
+  contents: read
+
+jobs:
+  # Runs on every push/PR: fast unit-test gate, no network, no packaging.
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Tk (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Install ffmpeg (Linux only — macOS/Windows runners ship it preinstalled)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run unit tests (no network)
+        # core.downloader.download() resolves ffmpeg eagerly (fails fast if
+        # missing) even for tests using a fake yt-dlp client, so ffmpeg must
+        # be on PATH here — not just in the build-release job's vendor fetch.
+        run: pytest -m "not integration"
+
+  # Runs only on tag push (v*): builds a per-OS onefile binary, runs the
+  # verify_e2e.py smoke gate (network + tk available in CI), and uploads
+  # artifacts. A release is only published once all matrix legs pass.
+  build-release:
+    name: build (${{ matrix.os }})
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Tk (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Fetch vendored ffmpeg + deno
+        run: python scripts/fetch_vendor.py
+
+      - name: Build with PyInstaller
+        run: pyinstaller app.spec
+
+      - name: E2E smoke gate — real network download (not the frozen binary)
+        run: python scripts/verify_e2e.py
+
+      - name: E2E smoke gate — frozen binary launch check (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader
+
+      - name: E2E smoke gate — frozen binary launch check (Windows)
+        if: runner.os == 'Windows'
+        run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader.exe
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YouTubeAudioDownloader-${{ matrix.os }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Create release with all OS artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/**/*
+          draft: false
+          generate_release_notes: true

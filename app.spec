@@ -1,0 +1,91 @@
+# -*- mode: python ; coding: utf-8 -*-
+"""PyInstaller spec: onefile, windowed build of the YouTube Audio Downloader
+GUI, with per-OS ffmpeg/deno vendored binaries and app icon embedded.
+
+Build:
+    pyinstaller app.spec
+
+Vendored binaries must already exist (run scripts/fetch_vendor.py first).
+Icons must already exist (run scripts/make_icons.py first).
+"""
+
+import sys
+from pathlib import Path
+
+from PyInstaller.utils.hooks import collect_data_files
+
+block_cipher = None
+
+REPO_ROOT = Path(SPECPATH).resolve()
+
+
+def _platform_dir_name() -> str:
+    if sys.platform == "darwin":
+        return "darwin"
+    if sys.platform.startswith("win"):
+        return "win"
+    return "linux"
+
+
+PLATFORM_DIR = _platform_dir_name()
+VENDOR_DIR = REPO_ROOT / "vendor" / PLATFORM_DIR
+
+if sys.platform.startswith("win"):
+    _ffmpeg_name, _deno_name = "ffmpeg.exe", "deno.exe"
+    _icon_path = str(REPO_ROOT / "assets" / "icon.ico")
+elif sys.platform == "darwin":
+    _ffmpeg_name, _deno_name = "ffmpeg", "deno"
+    _icon_path = str(REPO_ROOT / "assets" / "icon.icns")
+else:
+    _ffmpeg_name, _deno_name = "ffmpeg", "deno"
+    _icon_path = str(REPO_ROOT / "assets" / "icon_256.png")
+
+# --add-binary entries: (source path on the build host, destination dir
+# inside the onefile bundle, resolved at runtime via sys._MEIPASS by
+# core/binaries.py).
+binaries = [
+    (str(VENDOR_DIR / _ffmpeg_name), "."),
+    (str(VENDOR_DIR / _deno_name), "."),
+]
+
+datas = collect_data_files("customtkinter")
+
+a = Analysis(
+    ["gui/app.py"],
+    pathex=[str(REPO_ROOT)],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name="YouTubeAudioDownloader",
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=_icon_path,
+)
