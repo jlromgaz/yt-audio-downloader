@@ -95,9 +95,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Tk (Linux only)
+      - name: Install Tk + Xvfb (Linux only)
+        # Xvfb: GitHub's Linux runners are headless (no $DISPLAY), but the
+        # packaged app is a Tk GUI that needs *some* display to initialize
+        # even for a launch-only smoke test — confirmed via a real release
+        # run (TclError: no display name and no $DISPLAY environment
+        # variable). Xvfb provides a virtual framebuffer for exactly this.
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y python3-tk
+        run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
@@ -116,8 +121,12 @@ jobs:
       # manually in development instead (verified working on a residential
       # IP as part of this project's history).
 
-      - name: E2E smoke gate — frozen binary launch check (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: E2E smoke gate — frozen binary launch check (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader
+
+      - name: E2E smoke gate — frozen binary launch check (macOS)
+        if: runner.os == 'macOS'
         run: python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader
 
       - name: E2E smoke gate — frozen binary launch check (Windows)
