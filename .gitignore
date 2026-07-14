@@ -16,3 +16,12 @@ build/
 # Downloaded music folder (to avoid bloating the repo)
 "Best Arcade Music/"
 YoutubeAudioDownloader/
+
+# Vendored native binaries (ffmpeg/deno), fetched per-OS by scripts/fetch_vendor.py
+vendor/
+
+# PyInstaller
+*.spec.bak
+
+# Local gentle-ai/SDD tooling cache (not project source)
+.atl/
