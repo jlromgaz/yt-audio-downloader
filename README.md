@@ -1,9 +1,88 @@
-# YouTube Audio Downloader
+# 🎧 YouTube Audio Downloader
 
-A desktop app (with a CLI fallback) to download audio from YouTube videos or
-entire playlists as high-quality **320 kbps MP3**. Built with `yt-dlp` for
-extraction, `ffmpeg` for audio conversion, and a CustomTkinter GUI on top of
-a tkinter-free core library.
+<p>
+  <img src="https://img.shields.io/badge/status-personal%20project-blue" alt="status badge" />
+  <img src="https://img.shields.io/badge/purpose-educational-brightgreen" alt="educational purpose badge" />
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white" alt="python version badge" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="platform badge" />
+</p>
+
+A desktop app (with a CLI fallback) that downloads audio from YouTube videos or
+playlists and converts it to high-quality **320 kbps MP3**. It started as a way
+to get comfortable steering an AI coding assistant through a stack outside my
+day-to-day expertise (Java) — packaging a Python desktop GUI, wiring a CI/CD
+pipeline, and orchestrating a real download/conversion workflow end to end.
+
+> ⚠️ **This is a personal, educational project.** It exists to practice
+> building and shipping a cross-platform desktop app with AI-assisted
+> development — not to encourage or facilitate copyright infringement. See
+> [Purpose & Disclaimer](#-purpose--disclaimer) below before using it.
+
+---
+
+## 📚 Table of Contents
+
+- [Purpose & Disclaimer](#-purpose--disclaimer)
+- [Tech Stack](#-tech-stack)
+- [For End Users](#for-end-users)
+- [For Developers](#for-developers)
+- [Architecture](#architecture)
+- [Coding Standards](#coding-standards)
+
+---
+
+## 🎓 Purpose & Disclaimer
+
+This repository is part of my personal AI-assisted development portfolio. My
+day-to-day expertise is **Java**; this project is a hands-on exercise in using
+AI tools to design, build, and ship software in a language and stack I don't
+use professionally (Python, a native GUI, PyInstaller packaging, GitHub
+Actions CI/CD).
+
+**The goal is learning, not distribution.** Specifically:
+
+- This tool is intended for **personal, educational, and experimentation
+  use only** — for example, downloading audio you own the rights to, that is
+  explicitly licensed for reuse (e.g. Creative Commons), or that is in the
+  public domain.
+- It is **not affiliated with, endorsed by, or sponsored by YouTube or
+  Google**, and "YouTube" is used here only to describe compatibility.
+- Downloading copyrighted content without the rights holder's permission may
+  violate YouTube's Terms of Service and copyright law in your jurisdiction.
+  **You are responsible for how you use this tool** — please respect content
+  creators' rights and the platform's terms.
+- No YouTube account credentials, API keys, or any other third-party secrets
+  are used, stored, or required anywhere in this project — it only relies on
+  `yt-dlp`'s public extraction logic against publicly accessible URLs.
+
+If you represent a rights holder with a concern about this repository, please
+open an issue and I'll address it promptly.
+
+---
+
+## 🧱 Tech Stack
+
+This project is the main showcase for applying AI-assisted development to a
+non-Java stack. Here's everything under the hood:
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Language** | Python 3.12+ | Core application language |
+| **Media extraction** | [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) | Resolves and downloads audio streams |
+| **Audio conversion** | [`ffmpeg`](https://ffmpeg.org/) (vendored per OS) | Converts extracted audio to 320 kbps MP3 |
+| **JS runtime** | [`deno`](https://deno.com/) (vendored per OS) | Runs `yt-dlp`'s remote JS-challenge component |
+| **Desktop GUI** | [`CustomTkinter`](https://github.com/TomSchimansky/CustomTkinter) on top of Tkinter | Cross-platform native-looking UI |
+| **Imaging** | [`Pillow`](https://python-pillow.org/) | Icon rasterization and image handling |
+| **Packaging** | [`PyInstaller`](https://pyinstaller.org/) | Builds onefile binaries / macOS `.app` bundle |
+| **Testing** | [`pytest`](https://pytest.org/) | Unit tests (network-free, `yt-dlp` mocked) + marked integration tests |
+| **CI/CD** | [GitHub Actions](https://github.com/features/actions) | Test matrix (Win/macOS/Linux), tag-triggered release pipeline |
+
+Architecturally, the app keeps a **strict separation** between a
+UI-agnostic `core/` (business logic) and a `gui/` presentation layer — the
+GUI never talks to `yt-dlp` directly, and `core/` never imports Tkinter. See
+[Architecture](#architecture) for details.
+
+---
 
 ## For End Users
 
@@ -23,10 +102,10 @@ No Python install needed — just download the app for your OS:
      `xattr -dr com.apple.quarantine YouTubeAudioDownloader-macos.app` in
      Terminal (note the `-r`, needed since a `.app` is a folder), then open
      it normally.
-3. Paste a YouTube link (video, playlist, or radio/mix), pick a destination
+4. Paste a YouTube link (video, playlist, or radio/mix), pick a destination
    folder (defaults to `Downloads/YoutubeAudioDownloader`), and click
    **Download**.
-4. Playlists and radio/mix links prompt a confirmation before anything
+5. Playlists and radio/mix links prompt a confirmation before anything
    downloads; invalid links are reported in the log without crashing the app.
 
 ### Platform verification status (honest, as of this writing)
@@ -100,7 +179,7 @@ python scripts/verify_e2e.py --binary "dist/YouTubeAudioDownloader-macos.app/Con
 python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-linux
 ```
 
-### Architecture
+## Architecture
 
 - `core/` — pure business logic (URL classification, download orchestration,
   binary resolution). No tkinter imports, no direct UI dependency.
@@ -122,7 +201,7 @@ python scripts/verify_e2e.py --binary dist/YouTubeAudioDownloader-linux
   on a `v*` tag, builds a Windows/macOS/Linux matrix, runs the e2e smoke
   gate, and publishes a GitHub Release with all three artifacts.
 
-### Coding standards
+## Coding Standards
 
 See [`AGENTS.md`](AGENTS.md) for the full conventions (core/gui boundary,
 type hints, no bare `except`, TDD for `core/`, English-only code/comments).
